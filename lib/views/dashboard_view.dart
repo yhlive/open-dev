@@ -81,8 +81,8 @@ class DashboardView extends StatelessWidget {
               children: [
                 Container(
                   margin: const EdgeInsets.all(8),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: Theme.of(context).colorScheme.secondaryContainer,
@@ -96,21 +96,29 @@ class DashboardView extends StatelessWidget {
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       const SizedBox(width: 6),
-                      Text(
+                      Expanded(
+                        child: Text(
+                          'OpenDev is a free and open source assistant for easier coding. '
+                          'It provides a collection of tools to help developers with various tasks, '
+                          'such as code generation, formatting, and more.',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                      Expanded(
+                          child: Text(
                         'Welcome to OpenDev! The Free and Open Source assistant for easier Coding',
                         style: Theme.of(context).textTheme.bodyLarge,
-                      ),
+                      ))
                     ],
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       // Two columns on a wide window, one column when narrow.
-                      final columns =
-                          constraints.maxWidth < 600 ? 1 : 2;
+                      final columns = constraints.maxWidth < 600 ? 1 : 2;
                       return Wrap(
                         spacing: 16,
                         runSpacing: 16,

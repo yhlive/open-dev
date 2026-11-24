@@ -20,7 +20,7 @@ class DashboardCard extends StatelessWidget {
       splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
       onTap: () => onTap(),
       child: Container(
-        height: 102,
+        constraints: const BoxConstraints(minHeight: 102),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
           color: Theme.of(context).focusColor,

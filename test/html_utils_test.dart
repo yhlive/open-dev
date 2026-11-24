@@ -5,7 +5,7 @@ void main() {
   group('HtmlUtils.encode', () {
     test('escapes basic element entities', () {
       expect(HtmlUtils.encode('<b>hi</b> & "ok"'),
-          '&lt;b>hi&lt;/b> &amp; "ok"');
+          '&lt;b&gt;hi&lt;/b&gt; &amp; "ok"');
     });
 
     test('attribute mode also escapes quotes and slashes', () {
@@ -18,7 +18,7 @@ void main() {
   group('HtmlUtils.decode', () {
     test('decodes common named entities', () {
       expect(HtmlUtils.decode('&amp;&lt;&gt;&quot;&apos;&nbsp;'),
-          '&<>"\' ');
+          '&<>"\'\u00A0');
     });
 
     test('decodes decimal numeric entities', () {

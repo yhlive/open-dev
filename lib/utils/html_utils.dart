@@ -2,7 +2,7 @@ import 'dart:convert';
 
 class HtmlUtils {
   static const _escape = HtmlEscape(HtmlEscapeMode.element);
-  static const _attr = HtmlEscape(HtmlEscapeMode.attribute);
+  static const _attr = HtmlEscape();
 
   /// Standard HTML escaping (for element content): < > & become entities.
   static String encode(String input) => _escape.convert(input);

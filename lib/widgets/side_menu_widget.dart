@@ -56,6 +56,15 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
   }
 
   Widget _buildHeader(BuildContext context, {required bool compact}) {
+    if (compact) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PaletteButton(sideMenu: widget.sideMenu),
+          _ThemeToggleButton()
+        ],
+      );
+    }
     if (kIsWeb && !compact) {
       if (compact) {
         return Padding(
