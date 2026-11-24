@@ -57,17 +57,31 @@ class CsvUtils {
 
   /// Converts CSV (with header row) into a pretty-printed JSON array of
   /// objects.
-  static String csvToJson(String csv, {String delimiter = ','}) {
+  static String csvToJson(String csv,
+      {String delimiter = ',', bool keepValuesAsText = false}) {
     final rows = parse(csv, delimiter: delimiter);
     if (rows.isEmpty) return '[]';
     final headers = rows.first;
+    final seen = <String>{};
+    for (int i = 0; i < headers.length; i++) {
+      final name = headers[i];
+      if (!seen.add(name)) {
+        throw FormatException(
+            'Duplicate header name: "$name" at column ${i + 1}.');
+      }
+    }
     final data = <Map<String, dynamic>>[];
     for (int i = 1; i < rows.length; i++) {
       final r = rows[i];
       if (r.length == 1 && r.first.isEmpty) continue;
       final m = <String, dynamic>{};
       for (int c = 0; c < headers.length; c++) {
-        m[headers[c]] = c < r.length ? _coerce(r[c]) : null;
+        if (c >= r.length) {
+          m[headers[c]] = null;
+          continue;
+        }
+        final value = r[c];
+        m[headers[c]] = keepValuesAsText ? value : _coerce(value);
       }
       data.add(m);
     }

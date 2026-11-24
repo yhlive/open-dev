@@ -12,13 +12,15 @@ class CsvView extends StatefulWidget {
 }
 
 class _CsvViewState extends State<CsvView> {
-  final TextEditingController _input = TextEditingController(text: '''name,age,active
+  final TextEditingController _input =
+      TextEditingController(text: '''name,age,active
 Ada,36,true
 Linus,54,true
 Margaret,87,false''');
   final TextEditingController _output = TextEditingController();
   _CsvMode _mode = _CsvMode.csvToJson;
   String _delimiter = ',';
+  bool _keepValuesAsText = false;
   String? _error;
   List<List<String>> _table = const [];
 
@@ -33,17 +35,20 @@ Margaret,87,false''');
     try {
       switch (_mode) {
         case _CsvMode.csvToJson:
-          _output.text =
-              CsvUtils.csvToJson(_input.text, delimiter: _delimiter);
+          _output.text = CsvUtils.csvToJson(
+            _input.text,
+            delimiter: _delimiter,
+            keepValuesAsText: _keepValuesAsText,
+          );
           _table = CsvUtils.parse(_input.text, delimiter: _delimiter);
         case _CsvMode.jsonToCsv:
-          _output.text =
-              CsvUtils.jsonToCsv(_input.text, delimiter: _delimiter);
+          _output.text = CsvUtils.jsonToCsv(_input.text, delimiter: _delimiter);
           _table = CsvUtils.parse(_output.text, delimiter: _delimiter);
       }
       _error = null;
     } catch (e) {
-      _error = e.toString();
+      _error = e is FormatException ? e.message : e.toString();
+      _output.clear();
       _table = const [];
     }
     setState(() {});
@@ -74,8 +79,7 @@ Margaret,87,false''');
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
-                style: const TextStyle(
-                    fontFamily: 'monospace', fontSize: 13),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 decoration: InputDecoration(
                   isDense: true,
                   filled: true,
@@ -121,8 +125,8 @@ Margaret,87,false''');
                 for (int i = 0; i < header.length; i++)
                   DataCell(Text(
                     i < r.length ? r[i] : '',
-                    style: const TextStyle(
-                        fontFamily: 'monospace', fontSize: 12),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 12),
                   )),
               ]),
           ],
@@ -186,6 +190,17 @@ Margaret,87,false''');
           ),
         ),
         const Divider(indent: 8, endIndent: 8),
+        if (_mode == _CsvMode.csvToJson)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              dense: true,
+              title: const Text('Keep values as text'),
+              value: _keepValuesAsText,
+              onChanged: (v) => setState(() => _keepValuesAsText = v),
+            ),
+          ),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
