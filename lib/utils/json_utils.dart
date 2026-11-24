@@ -4,25 +4,29 @@ import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 String prettyJson(String jsonString) {
-  // Convert the JSON string to a Dart object (Map)
-  Map<String, dynamic> jsonData = jsonDecode(jsonString);
-
-  // Create a JsonEncoder with indentation
-  const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-
-  // Convert the Dart object back to a JSON string with indentation
-  return encoder.convert(jsonData);
+  return const JsonEncoder.withIndent('  ').convert(jsonDecode(jsonString));
 }
 
 String minifyJson(String jsonString) {
-  // Convert the JSON string to a Dart object (Map)
-  Map<String, dynamic> jsonData = jsonDecode(jsonString);
+  return jsonEncode(jsonDecode(jsonString));
+}
 
-  // Create a JsonEncoder with indentation
-  const JsonEncoder encoder = JsonEncoder.withIndent('');
+String describeJsonError(FormatException error, String source) {
+  final offest = error.offset;
+  if (offest == null || offest < 0 || offest > source.length) {
+    return error.message;
+  }
 
-  // Convert the Dart object back to a JSON string with indentation
-  return encoder.convert(jsonData).trim().replaceAll('\n', '');
+  var line = 1;
+  var lineStart = 0;
+  for (var i = 0; i < offest; i++) {
+    if (source.codeUnitAt(i) == 10) {
+      line++;
+      lineStart = i + 1;
+    }
+  }
+  final column = offest - lineStart + 1;
+  return 'Line $line, column $column: ${error.message}';
 }
 
 String convertJsonToYaml(String jsonString) {

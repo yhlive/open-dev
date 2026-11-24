@@ -24,7 +24,7 @@ class JsonView extends StatefulWidget {
 class _JsonViewState extends State<JsonView> {
   final CodeLineEditingController _controller = CodeLineEditingController();
   final CodeLineEditingController _yamlViewer = CodeLineEditingController();
-  String jsonToView = '{"key":"value"}';
+  Object _preview = {'key': 'value'};
   String errorMessage = '';
   late CodeFindController _findController;
   bool convertToYamlMode = false;
@@ -35,6 +35,36 @@ class _JsonViewState extends State<JsonView> {
     super.initState();
   }
 
+  void _runJsonAction(VoidCallback action) {
+    final source = _controller.text;
+    setState(() {
+      try {
+        action();
+        errorMessage = '';
+      } on FormatException catch (e) {
+        errorMessage = describeJsonError(e, source);
+      } catch (e) {
+        errorMessage = e.toString();
+      }
+    });
+  }
+
+  Widget _buildJsonPreview() {
+    final value = _preview;
+    if (value is Map<String, dynamic>) {
+      return JsonViewerWidget(value, false, key: ObjectKey(value));
+    }
+    if (value is List<dynamic>) {
+      return JsonArrayViewerWidget(value, false, key: ObjectKey(value));
+    }
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        jsonEncode(value),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -42,7 +72,8 @@ class _JsonViewState extends State<JsonView> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text('Json parser', style: Theme.of(context).textTheme.headlineSmall),
+          child: Text('Json parser',
+              style: Theme.of(context).textTheme.headlineSmall),
         ),
         const Divider(endIndent: 8, indent: 8),
         Expanded(
@@ -54,30 +85,30 @@ class _JsonViewState extends State<JsonView> {
                     Column(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 8),
                           // color: Theme.of(context).colorScheme.background,
                           child: Row(
                             children: [
                               ElevatedButton(
-                                onPressed: () {
-                                  try {
-                                    _controller.text = prettyJson(_controller.text);
-                                    setState(() {
-                                      errorMessage = '';
-                                    });
-                                  } catch (e) {
-                                    setState(() {
-                                      errorMessage = e.toString();
-                                    });
-                                  }
-                                },
+                                onPressed: () => _runJsonAction(() {
+                                  _controller.text = jsonDecode(_controller.text);
+                                } as VoidCallback),
                                 child: const Text('pretty'),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () => _runJsonAction(() {
+                                  _controller.text = minifyJson(_controller.text);
+                                } as VoidCallback),
+                                child: const Text('minify'),
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: () {
                                   try {
-                                    _controller.text = minifyJson(_controller.text);
+                                    _controller.text =
+                                        minifyJson(_controller.text);
                                     errorMessage = '';
                                   } catch (e) {
                                     errorMessage = e.toString();
@@ -100,27 +131,33 @@ class _JsonViewState extends State<JsonView> {
                             style: CodeEditorStyle(
                               codeTheme: CodeHighlightTheme(
                                 languages: {
-                                  'json': CodeHighlightThemeMode(mode: langJson),
+                                  'json':
+                                      CodeHighlightThemeMode(mode: langJson),
                                 },
                                 theme: editorThemeOf(context),
                               ),
                             ),
                             controller: _controller,
                             wordWrap: true,
-                            indicatorBuilder: (context, editingController, chunkController, notifier) {
+                            indicatorBuilder: (context, editingController,
+                                chunkController, notifier) {
                               return Row(
                                 children: [
                                   DefaultCodeLineNumber(
                                     controller: editingController,
                                     notifier: notifier,
                                   ),
-                                  DefaultCodeChunkIndicator(width: 20, controller: chunkController, notifier: notifier)
+                                  DefaultCodeChunkIndicator(
+                                      width: 20,
+                                      controller: chunkController,
+                                      notifier: notifier)
                                 ],
                               );
                             },
                             findController: _findController,
                             findBuilder: (context, controller, readOnly) =>
-                                CodeFindPanelView(controller: controller, readOnly: readOnly),
+                                CodeFindPanelView(
+                                    controller: controller, readOnly: readOnly),
                             // toolbarController: const ContextMenuControllerImpl(),
                             sperator: Container(width: 1, color: Colors.blue),
                           ),
@@ -134,7 +171,8 @@ class _JsonViewState extends State<JsonView> {
                       alignment: Alignment(0, errorMessage.isEmpty ? 2 : 1),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: ErrorNotificationWidget(errorMessage: errorMessage),
+                        child:
+                            ErrorNotificationWidget(errorMessage: errorMessage),
                       ),
                     )
                   ],
@@ -150,29 +188,27 @@ class _JsonViewState extends State<JsonView> {
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 8),
                       // color: Colors.grey[850],
                       child: Row(
                         children: [
                           ElevatedButton(
-                            onPressed: () {
-                              jsonToView = prettyJson(_controller.text);
-                              setState(() {
-                                convertToYamlMode = false;
-                              });
-                            },
+                            onPressed: () => _runJsonAction(() {
+                              _preview = jsonDecode(_controller.text);
+                              convertToYamlMode = false;
+                            } as VoidCallback),
                             child: const Text('parse'),
                           ),
                           const SizedBox(
                             width: 8,
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              _yamlViewer.text = convertJsonToYaml(_controller.text);
-                              setState(() {
-                                convertToYamlMode = true;
-                              });
-                            },
+                            onPressed: () => _runJsonAction(() {
+                              _yamlViewer.text =
+                                  convertJsonToYaml(_controller.text);
+                              convertToYamlMode = true;
+                            } as VoidCallback),
                             child: const Text('convert to yaml'),
                           )
                         ],
@@ -184,7 +220,8 @@ class _JsonViewState extends State<JsonView> {
                               style: CodeEditorStyle(
                                 codeTheme: CodeHighlightTheme(
                                   languages: {
-                                    'yaml': CodeHighlightThemeMode(mode: langJson),
+                                    'yaml':
+                                        CodeHighlightThemeMode(mode: langJson),
                                   },
                                   theme: editorThemeOf(context),
                                 ),
@@ -192,7 +229,8 @@ class _JsonViewState extends State<JsonView> {
                               controller: _yamlViewer,
                               readOnly: true,
                               wordWrap: true,
-                              indicatorBuilder: (context, editingController, chunkController, notifier) {
+                              indicatorBuilder: (context, editingController,
+                                  chunkController, notifier) {
                                 return Row(
                                   children: [
                                     DefaultCodeLineNumber(
@@ -200,7 +238,9 @@ class _JsonViewState extends State<JsonView> {
                                       notifier: notifier,
                                     ),
                                     DefaultCodeChunkIndicator(
-                                        width: 20, controller: chunkController, notifier: notifier)
+                                        width: 20,
+                                        controller: chunkController,
+                                        notifier: notifier)
                                   ],
                                 );
                               },
@@ -208,10 +248,7 @@ class _JsonViewState extends State<JsonView> {
                             )
                           : ListView(
                               children: [
-                                JsonViewerWidget(
-                                  jsonDecode(jsonToView),
-                                  false,
-                                ),
+                                _buildJsonPreview(),
                               ],
                             ),
                     ),

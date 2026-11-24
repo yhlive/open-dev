@@ -57,6 +57,18 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
 
   Widget _buildHeader(BuildContext context, {required bool compact}) {
     if (kIsWeb && !compact) {
+      if (compact) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PaletteButton(sideMenu: widget.sideMenu),
+              _ThemeToggleButton(),
+            ],
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.fromLTRB(8, 0, 0, 8),
         child: Row(
@@ -116,7 +128,8 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
           suffixIcon: _query.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(CupertinoIcons.clear_circled_solid, size: 16),
+                  icon:
+                      const Icon(CupertinoIcons.clear_circled_solid, size: 16),
                   padding: EdgeInsets.zero,
                   constraints:
                       const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -138,16 +151,15 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
     );
   }
 
-  Widget _buildFilteredList(
-      BuildContext context, List<_SidebarEntry> entries) {
+  Widget _buildFilteredList(BuildContext context, List<_SidebarEntry> entries) {
     final matches = _matchingEntries(entries);
     final cs = Theme.of(context).colorScheme;
     if (matches.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Text('No tools match',
-            style: TextStyle(
-                color: cs.onSurface.withOpacity(0.5), fontSize: 13)),
+            style:
+                TextStyle(color: cs.onSurface.withOpacity(0.5), fontSize: 13)),
       );
     }
     return Expanded(
@@ -162,15 +174,14 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
               setState(() => _query = '');
             },
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Icon(entry.icon, size: 18, color: cs.onSurface),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(entry.title,
-                        style: const TextStyle(fontSize: 14)),
+                    child:
+                        Text(entry.title, style: const TextStyle(fontSize: 14)),
                   ),
                 ],
               ),
@@ -201,19 +212,16 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
         children: [
           _buildHeader(context, compact: compact),
           if (!compact) _buildSearchField(context),
-          if (!compact)
-            _PinnedAndRecentsBlock(sideMenu: widget.sideMenu),
+          if (!compact) _PinnedAndRecentsBlock(sideMenu: widget.sideMenu),
         ],
       ),
       style: SideMenuStyle(
         itemHeight: 35,
         openSideMenuWidth: 250,
         compactSideMenuWidth: 60,
-        displayMode: compact
-            ? SideMenuDisplayMode.compact
-            : SideMenuDisplayMode.open,
-        selectedTitleTextStyle:
-            TextStyle(fontSize: 14, color: cs.primary),
+        displayMode:
+            compact ? SideMenuDisplayMode.compact : SideMenuDisplayMode.open,
+        selectedTitleTextStyle: TextStyle(fontSize: 14, color: cs.primary),
         unselectedTitleTextStyle:
             TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.75)),
         selectedColor: cs.primaryContainer,
@@ -389,8 +397,7 @@ class _SectionRowState extends State<_SectionRow> {
           color: _hover ? Theme.of(context).hoverColor : null,
           child: Row(
             children: [
-              Icon(tool.icon,
-                  size: 16, color: cs.onSurface.withOpacity(0.85)),
+              Icon(tool.icon, size: 16, color: cs.onSurface.withOpacity(0.85)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -401,8 +408,7 @@ class _SectionRowState extends State<_SectionRow> {
               ),
               if (widget.showUnstar && _hover)
                 InkWell(
-                  onTap: () =>
-                      UserPrefs.instance.toggleFavorite(widget.title),
+                  onTap: () => UserPrefs.instance.toggleFavorite(widget.title),
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(2),
