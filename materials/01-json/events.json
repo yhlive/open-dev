@@ -1,0 +1,15 @@
+[
+  {
+    "id": "00123",
+    "enabled": true,
+    "tags": [
+      "ready",
+      "export"
+    ]
+  },
+  {
+    "id": "00456",
+    "enabled": false,
+    "tags": []
+  }
+]

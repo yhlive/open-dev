@@ -1,0 +1,4 @@
+customer_id,zip,active,note
+00123,02108,true,"North, Team"
+00456,00501,false,"First line
+second ""quoted"" line"
