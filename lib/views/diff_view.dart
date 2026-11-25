@@ -15,6 +15,8 @@ class _DiffViewState extends State<DiffView> {
   final TextEditingController _right = TextEditingController();
   List<DiffLine> _diff = const [];
   bool _jsonMode = false;
+  bool _onlyChanges = false;
+  bool _hasCompared = false;
   String? _error;
 
   @override
@@ -38,6 +40,7 @@ class _DiffViewState extends State<DiffView> {
     }
     setState(() {
       _error = err;
+      _hasCompared = true;
       _diff = err == null ? DiffUtils.lineDiff(l, r) : const [];
     });
   }
@@ -64,8 +67,7 @@ class _DiffViewState extends State<DiffView> {
                   tooltip: 'Paste',
                   icon: const Icon(Icons.content_paste),
                   onPressed: () async {
-                    final data =
-                        await Clipboard.getData(Clipboard.kTextPlain);
+                    final data = await Clipboard.getData(Clipboard.kTextPlain);
                     if (data?.text != null) {
                       controller.text = data!.text!;
                     }
@@ -91,8 +93,7 @@ class _DiffViewState extends State<DiffView> {
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 decoration: InputDecoration(
                   isDense: true,
                   filled: true,
@@ -117,7 +118,7 @@ class _DiffViewState extends State<DiffView> {
             style: TextStyle(color: cs.error, fontFamily: 'monospace')),
       );
     }
-    if (_diff.isEmpty) {
+    if (!_hasCompared) {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text('Press Compare to see the diff.'),
@@ -147,7 +148,8 @@ class _DiffViewState extends State<DiffView> {
     }
 
     final stats = DiffUtils.stats(_diff);
-
+    final visibleLines =
+        _onlyChanges ? DiffUtils.withChangeContext(_diff) : _diff;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,11 +157,9 @@ class _DiffViewState extends State<DiffView> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
-              _StatChip(
-                  label: '+${stats.added}', color: Colors.green.shade400),
+              _StatChip(label: '+${stats.added}', color: Colors.green.shade400),
               const SizedBox(width: 8),
-              _StatChip(
-                  label: '-${stats.removed}', color: Colors.red.shade400),
+              _StatChip(label: '-${stats.removed}', color: Colors.red.shade400),
               const SizedBox(width: 8),
               _StatChip(
                   label: '${stats.unchanged} unchanged',
@@ -167,6 +167,9 @@ class _DiffViewState extends State<DiffView> {
             ],
           ),
         ),
+        if (visibleLines.isEmpty)
+          const Padding(
+              padding: EdgeInsets.all(16), child: Text('No changes to show.')),
         Expanded(
           child: Container(
             margin: const EdgeInsets.all(8),
@@ -175,13 +178,13 @@ class _DiffViewState extends State<DiffView> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ListView.builder(
-              itemCount: _diff.length,
+              itemCount: visibleLines.length,
               itemBuilder: (context, i) {
-                final d = _diff[i];
+                final d = visibleLines[i];
                 return Container(
                   color: bg(d.op),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -246,26 +249,36 @@ class _DiffViewState extends State<DiffView> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
+          child: Wrap(
+            spacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('Text / JSON Diff',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const Spacer(),
+              Text(
+                'Text / JSON Diff',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                const Text('JSON-aware'),
+                Switch(
+                  value: _jsonMode,
+                  onChanged: (v) => setState(() => _jsonMode = v),
+                ),
+              ]),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('JSON-aware'),
+                  const Text('Only Changes'),
                   Switch(
-                    value: _jsonMode,
-                    onChanged: (v) => setState(() => _jsonMode = v),
+                    value: _onlyChanges,
+                    onChanged: (v) => setState(() => _onlyChanges = v),
                   ),
                 ],
               ),
-              const SizedBox(width: 12),
               FilledButton.icon(
                 onPressed: _compute,
                 icon: const Icon(Icons.difference, size: 16),
                 label: const Text('Compare'),
-              ),
+              )
             ],
           ),
         ),
@@ -302,8 +315,7 @@ class _StatChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-            color: color, fontFamily: 'monospace', fontSize: 12),
+        style: TextStyle(color: color, fontFamily: 'monospace', fontSize: 12),
       ),
     );
   }

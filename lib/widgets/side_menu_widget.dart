@@ -105,17 +105,16 @@ class _SideMenuWidgetState extends State<SideMenuWidget> {
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      child: Row(
-        mainAxisAlignment:
-            compact ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           if (!compact)
             const Text('Open Dev',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            _PaletteButton(sideMenu: widget.sideMenu),
-            _ThemeToggleButton(),
-          ]),
+          _PaletteButton(sideMenu: widget.sideMenu),
+          _ThemeToggleButton(),
         ],
       ),
     );
