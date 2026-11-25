@@ -1,9 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:open_dev/utils/file_hash_utils.dart';
 import 'package:open_dev/widgets/data_widget.dart';
 
 class FileHashView extends StatefulWidget {
@@ -16,7 +15,9 @@ class FileHashView extends StatefulWidget {
 class _FileHashViewState extends State<FileHashView> {
   String? _fileName;
   int? _fileSize;
+  bool _choosing = false;
   bool _computing = false;
+  String? _error;
   Map<String, String> _hashes = const {};
   final TextEditingController _verifyController = TextEditingController();
 
@@ -27,6 +28,49 @@ class _FileHashViewState extends State<FileHashView> {
   }
 
   Future<void> _pickAndHash() async {
+    if (_choosing || _computing) return;
+    setState(() => _choosing = true);
+    try {
+      final result = await FilePicker.pickFiles(
+        withData: kIsWeb,
+        withReadStream: !kIsWeb,
+      );
+      if ((!mounted) || result == null || result.files.isEmpty) return;
+      final f = result.files.single;
+      setState(() {
+        _fileName = f.name;
+        _fileSize = f.size;
+        _computing = true;
+        _hashes = const {};
+        _error = null;
+      });
+      final bytes = f.bytes;
+      final contents = f.readStream ??
+          (bytes == null ? null : Stream<List<int>>.value(bytes));
+      if (contents == null) {
+        throw StateError('The file contents are unavailable.');
+      }
+      final hashes = await computeFileHashes(contents);
+      if (!mounted) return;
+      setState(() {
+        _hashes = hashes;
+        _computing = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        setState(() {
+          _error = 'Could not read the file. Choose it again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _choosing = false;
+          _computing = false;
+        });
+      }
+    }
+
     final result = await FilePicker.pickFiles(withData: true);
     if (result == null || result.files.isEmpty) return;
     final f = result.files.single;
@@ -90,7 +134,7 @@ class _FileHashViewState extends State<FileHashView> {
                   style: Theme.of(context).textTheme.headlineSmall),
               const Spacer(),
               FilledButton.icon(
-                onPressed: _computing ? null : _pickAndHash,
+                onPressed: _choosing || _computing ? null : _pickAndHash,
                 icon: const Icon(Icons.upload_file, size: 16),
                 label: const Text('Choose file'),
               ),
@@ -104,7 +148,15 @@ class _FileHashViewState extends State<FileHashView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_fileName == null && !_computing)
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: cs.error),
+                    ),
+                  ),
+                if (_fileName == null && !_computing && _error == null)
                   Expanded(
                     child: Center(
                       child: Container(
@@ -149,7 +201,7 @@ class _FileHashViewState extends State<FileHashView> {
                       ),
                     ),
                   ),
-                if (_fileName != null && !_computing) ...[
+                if (_fileName != null && !_computing && _hashes.isNotEmpty) ...[
                   Row(children: [
                     Icon(Icons.description, color: cs.primary),
                     const SizedBox(width: 8),
@@ -189,8 +241,7 @@ class _FileHashViewState extends State<FileHashView> {
                           controller: _verifyController,
                           decoration: InputDecoration(
                             isDense: true,
-                            hintText:
-                                'Paste an expected hash (any algorithm)…',
+                            hintText: 'Paste an expected hash (any algorithm)…',
                             filled: true,
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
